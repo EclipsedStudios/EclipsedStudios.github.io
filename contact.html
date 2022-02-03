@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Jaden Baker's Portfolio</title>
+
+    <link href="CSS/bootstrap.css" rel="stylesheet">
+
+    <link href="CSS/port.css" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <style>
+        body {
+          background-color: #121212;
+          color: #ffffff;
+        }
+    </style>
+
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Return home</a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container -->
+    </nav>
+
+    <div class="container">
+
+      <div class="row">
+
+        <div class="col-lg-12">
+          <h1 class="page-header">Contact Information</h1>
+        </div>
+
+      </div>
+
+      <style type="text/css">
+        .br {
+            display: block;
+            margin-bottom: 0em;
+        }
+          
+        .brmedium {
+            display: block;
+            margin-bottom: 1em;
+        }
+          
+        .brlarge {
+            display: block;
+            margin-bottom: 2em;
+        }
+      </style>
+
+      
+
+      <h5> Jaden Baker </h5> <span class="br"></span> <span class="blue"></span> 
+      <h5> 765-637-8347 </h5> <span class="br"></span> <span class="white"></span> 
+      <h5> jaden@eclipsed-studios.com </h5> <span class="br"></span> 
+      <h5> Fargo, North Dakota </h5>
+
+    </div><!-- /.container -->
+
+    <div class="container">
+
+      <hr>
+
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Copyright &copy; Jaden Baker <span id="getCurrentDate"></span></p>
+            <p>Created with CSS, HTML, and JS, hosted on Github</span></p>
+          </div>
+        </div>
+      </footer>
+      
+    </div><!-- /.container -->
+
+    <!-- JavaScript -->
+    <script src="JS/jquery-1.10.2.js"></script>
+    <script src="JS/bootstrap.js"></script>
+    <script type="text/javascript">
+      let dt = new Date();
+      document.getElementById('getCurrentDate').innerHTML = dt.getFullYear();
+    </script>
+  </body>
+
+</html>
