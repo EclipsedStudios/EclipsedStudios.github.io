@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Jaden Baker's Portfolio</title>
+    <link href="../CSS/port.css" rel="stylesheet">
+    <link href="../CSS/bootstrap.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="../highlightjs/styles/stackoverflow-dark.min.css">
+    <script src="../highlightjs/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+  </head>
+
+  <body>
+
+    <style>
+        body {
+          background-color: #121212;
+          color: #ffffff;
+        }
+        pre code {
+          overflow:auto;
+          color: white;
+          background-color: #121212;
+          display: block;
+        }
+    </style>
+
+    <nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+      <div class="container">
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="../index.html">Return home</a></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container -->
+    </nav>
+
+    <br>
+    <div class="container">
+      <br>
+      <br>
+      <style type="text/css">
+        .br {
+            display: block;
+            margin-bottom: 0em;
+        }
+          
+        .brmedium {
+            display: block;
+            margin-bottom: 1em;
+        }
+          
+        .brlarge {
+            display: block;
+            margin-bottom: 2em;
+        }
+      </style>
+      <h3>.java files</h3>
+      <h6>Only ones created by me are provided, the rest are ommited</h6>
+      <a href="#CentralServer">CentralServer.java</a> <span class="br"></span> 
+      <a href="#ServerClientThread">ServerClientThread.java</a> <span class="br"></span> 
+      <a href="#ServerObjectStorage">ServerObjectStorage.java</a> <span class="br"></span> 
+      <a href="#UserClient">UserClient.java</a> <span class="br"></span> 
+      <a href="#SettingsAndConstants">SettingsAndConstants.java</a>
+
+      <h2>CentralServer.java</h2>
+      <pre><code class="language-csharp">
+      package SocialMedia.ServerAndClient;
+
+      import SocialMedia.FriendsList;
+      import SocialMedia.Profile;
+
+      import java.io.BufferedReader;
+      import java.io.File;
+      import java.io.FileReader;
+      import java.io.IOException;
+      import java.net.ServerSocket;
+      import java.net.Socket;
+      import java.util.ArrayList;
+      import java.util.Arrays;
+
+      /**
+      * Represents the server
+      *
+      * @author Jaden Baker
+      * @version 12/7/20
+      */
+
+      public class CentralServer {
+
+          public static ServerObjectStorage serverObjectStorage;
+          public static int numberOfConnections = 0;
+
+          public static ArrayList<ServerClientThread> serverClientThreads = new ArrayList<>();
+
+
+          public static void getUsersFromDatabase() {
+              File dir = new File("UsernameFiles");
+              File[] directoryListing = dir.listFiles();
+              if (directoryListing != null) {
+                  for (File child : directoryListing) {
+                      try {
+                          String name;
+                          String email;
+                          FriendsList friendsList;
+                          String friendsListString;
+                          String website;
+                          String interests;
+                          String aboutMe;
+                          int age;
+                          String password;
+                          BufferedReader reader;
+                          try {
+                              reader = new BufferedReader(new FileReader(child));
+                              name = reader.readLine();
+                              email = reader.readLine();
+                              friendsListString = reader.readLine();
+                              website = reader.readLine();
+                              interests = reader.readLine();
+                              aboutMe = reader.readLine();
+                              age = Integer.parseInt(reader.readLine());
+                              password = reader.readLine();
+                              serverObjectStorage.users.add(new Profile(name,
+                                      age,
+                                      email,
+                                      website,
+                                      new ArrayList<>(Arrays.asList(interests
+                                              .substring(1, interests.length() - 1)
+                                              .split(", "))),
+                                      new FriendsList(),
+                                      aboutMe,
+                                      child.getName().strip().substring(0, child.getName().indexOf('.')),
+                                      password));
+                              reader.close();
+                          } catch (IOException e) {
+                              e.printStackTrace();
+                          }
+                      } catch (NumberFormatException exception) {
+                          System.out.println("File must be broken, skipping user: " + child.getName());
+                      }
+                  }
+              }
+
+              if (directoryListing != null) {
+                  for (File child : directoryListing) {
+                      try {
+                          FriendsList friendsList;
+                          String friendsListString;
+                          BufferedReader reader;
+                          Profile currentProfile = null;
+                          try {
+                              for(Profile p : serverObjectStorage.users){
+                                  if(p.getUsername().equals(child.getName().substring(0,child.getName().indexOf(".")))){
+                                      currentProfile = p;
+                                  }
+                              }
+                              reader = new BufferedReader(new FileReader(child));
+                              reader.readLine();
+                              reader.readLine();
+                              friendsListString = reader.readLine();
+                              String[] friendsSplitUp = friendsListString.split(", "); // [Frank2, Frank3]
+                              reader.readLine();
+                              reader.readLine();
+                              reader.readLine();
+                              reader.readLine();
+                              reader.readLine();
+                              for (String f : friendsSplitUp) {
+                                  for(Profile p : serverObjectStorage.users){
+                                      if(p.getUsername().equals(f)){
+                                          currentProfile.friendsList.addFriend(p);
+                                          p.friendsList.addFriend(currentProfile);
+                                      }
+                                  }
+                              }
+                              System.out.println("Added " + currentProfile.getUsername() + "'s friends");
+                              System.out.println("-------");
+                              for(Profile p : currentProfile.friendsList.getFriends()){
+                                  System.out.println(p.getUsername());
+                              }
+                              reader.close();
+                          } catch (IOException e) {
+                              e.printStackTrace();
+                          }
+                      } catch (NumberFormatException exception) {
+                          System.out.println("File must be broken, skipping user: " + child.getName());
+                      }
+                  }
+              }
+          }
+
+          public static void main(String[] args) {
+              serverObjectStorage = new ServerObjectStorage();
+              getUsersFromDatabase();
+              serverObjectStorage.saveUsersToDatabase();
+              Socket socket;
+              ServerSocket serverSocket = null;
+              System.out.println(SettingsAndConstants.WELCOME_MESSAGE_SERVER);
+              System.out.println("Server is online and looking for clients");
+              Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                  System.out.println("Server shutting down...");
+                  serverObjectStorage.saveUsersToDatabase();
+              }, "Shutdown-thread"));
+
+
+              try {
+                  serverSocket = new ServerSocket(SettingsAndConstants.SERVER_PORT);
+              } catch (IOException e) {
+                  e.printStackTrace();
+                  System.out.println("Server error");
+              }
+
+              while (true) {
+                  try {
+                      assert serverSocket != null;
+                      socket = serverSocket.accept();
+                      numberOfConnections++;
+                      System.out.println("----------------------------------------");
+                      System.out.println("Connection established to: " + socket.getInetAddress() +
+                              "\nClient Port: " + socket.getPort());
+                      System.out.println("Number of connections: " + numberOfConnections);
+                      System.out.println("----------------------------------------");
+                      ServerClientThread serverClientThread = new ServerClientThread(socket, serverObjectStorage);
+                      serverClientThreads.add(serverClientThread);
+                      serverClientThread.start();
+                      serverObjectStorage.saveUsersToDatabase();
+                      for (ServerClientThread s : serverClientThreads) {
+                          s.serverObjectStorage = serverObjectStorage;
+                      }
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                      System.out.println("Connection Error");
+                  }
+
+              }
+          }
+      }
+      </code></pre>
+      
+      <a id="ServerClientThread"></a>
+      <h2>ServerClientThread.java</h2>
+      <pre><code class="language-csharp">
+        package SocialMedia.ServerAndClient;
+
+        import SocialMedia.Profile;
+
+        import java.io.*;
+        import java.net.Socket;
+
+        /**
+        * Represents a client connected to the server
+        *
+        * @author Jaden Baker
+        * @version 12/7/20
+        */
+
+        public class ServerClientThread extends Thread {
+            public String line = null;
+            public Socket socket;
+            public ObjectOutputStream objectOutputStream = null;
+            public ObjectInputStream objectInputStream = null;
+            public ServerObjectStorage serverObjectStorage;
+            public Profile profile;
+
+            public ServerClientThread(Socket socket, ServerObjectStorage serverObjectStorage) {
+                this.socket = socket;
+                this.serverObjectStorage = serverObjectStorage;
+            }
+
+            private void stopThread() throws IOException {
+                socket.close();
+                System.out.println("Socket Closed");
+                CentralServer.numberOfConnections--;
+                serverObjectStorage.users.remove(profile);
+                CentralServer.serverClientThreads.remove(this);
+                System.out.println("----------------------------------------");
+            }
+
+            public void run() {
+                try {
+                    InputStream inputStream = socket.getInputStream();
+                    OutputStream outputStream = socket.getOutputStream();
+
+                    // create a ObjectOutputStream so we can write data from it
+                    objectOutputStream = new ObjectOutputStream(outputStream);
+                    // create a ObjectInputStream so we can read data from it
+                    objectInputStream = new ObjectInputStream(inputStream);
+
+                } catch (IOException e) {
+                    System.out.println("IO error in server thread");
+                }
+
+                try {
+                    System.out.println("Thread started");
+                    line = objectInputStream.readUTF();
+                    if (!line.equals("see users"))
+                        System.out.println(line);
+                    while (line.compareToIgnoreCase("quit") != 0) {
+                        switch (line) {
+                            case "see users":
+                                objectOutputStream.writeObject(serverObjectStorage.users);
+                                objectOutputStream.flush();
+                                objectOutputStream.reset();
+                                break;
+                            case "create profile":
+                                Profile temp1 = (Profile) objectInputStream.readObject();
+                                boolean foundDuplicate = false;
+                                for (Profile p : serverObjectStorage.users) {
+                                    if (p.getUsername().equals(temp1.getUsername())) {
+                                        System.out.println("User has failed to add a user");
+                                        foundDuplicate = true;
+                                    }
+                                }
+                                if(!foundDuplicate) {
+                                    serverObjectStorage.users.add(temp1);
+                                    serverObjectStorage.saveUsersToDatabase();
+                                    System.out.println("User has tried to add a user");
+                                }
+                                break;
+                            case "delete profile":
+                                System.out.println("User has deleted their account");
+                                try {
+                                    Profile temp2 = (Profile) objectInputStream.readObject();
+                                    System.out.println("remove " + temp2.getName());
+                                    for (Profile p : serverObjectStorage.users) {
+                                        if (p.getUsername().equals(temp2.getUsername())) {
+                                            temp2 = p;
+                                        }
+                                    }
+                                    for (Profile i : temp2.getFriendsList().friends) {
+                                        i.getFriendsList().removeFriend(temp2);
+                                    }
+                                    serverObjectStorage.users.remove(temp2);
+                                    serverObjectStorage.saveUsersToDatabase();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case "update profile":
+                                System.out.println("User has tried to update account");
+                                try {
+                                    Profile temp3 = (Profile) objectInputStream.readObject();
+                                    Profile toCopyTo = null;
+                                    for (Profile p : serverObjectStorage.users) {
+                                        if (temp3.getUsername().equals(p.getUsername())) {
+                                            toCopyTo = p;
+                                        }
+                                    }
+                                    System.out.println("Updated " + temp3.getName());
+                                    if (!(toCopyTo == null)) {
+                                        serverObjectStorage.users.remove(toCopyTo);
+                                        serverObjectStorage.users.add(temp3);
+                                        serverObjectStorage.saveUsersToDatabase();
+                                    } else {
+                                        System.out.println("Cant update user, name is null");
+                                    }
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case "add friend":
+                                System.out.println("User has tried to added a friend");
+                                try {
+                                    Profile profile1 = (Profile) objectInputStream.readObject(); //Getting
+                                    Profile profile2 = (Profile) objectInputStream.readObject(); //Sending
+                                    for (Profile p : serverObjectStorage.users) {
+                                        if (profile1.getUsername().equals(p.getUsername())) {
+                                            profile1 = p;
+                                        } else if (profile2.getUsername().equals(p.getUsername())) {
+                                            profile2 = p;
+                                        }
+                                    }
+                                    if (profile1.friendsList.incomingFriendRequests.contains(profile2) && profile2.friendsList.outgoingFriendRequests.contains(profile1)
+                                            || profile2.friendsList.incomingFriendRequests.contains(profile1) && profile1.friendsList.outgoingFriendRequests.contains(profile2)) {
+                                        profile1.friendsList.addFriend(profile2);
+                                        profile2.friendsList.addFriend(profile1);
+                                        profile1.friendsList.incomingFriendRequests.remove(profile2);
+                                        profile2.friendsList.outgoingFriendRequests.remove(profile1);
+                                        System.out.println(profile1.getUsername() + " has added " + profile2.getUsername() + " as a friend");
+                                    }
+                                    profile1.friendsList.incomingFriendRequests.add(profile2);
+                                    profile2.friendsList.outgoingFriendRequests.add(profile1);
+                                    System.out.println(profile1.getUsername() + " has received a friend request from " + profile2.getUsername());
+                                    serverObjectStorage.saveUsersToDatabase();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case "cancel friend":
+                                System.out.println("User has tried to cancel a friend request");
+                                try {
+                                    Profile profile1 = (Profile) objectInputStream.readObject(); //Getting
+                                    Profile profile2 = (Profile) objectInputStream.readObject(); //Sending
+                                    for (Profile p : serverObjectStorage.users) {
+                                        if (profile1.getUsername().equals(p.getUsername())) {
+                                            profile1 = p;
+                                        } else if (profile2.getUsername().equals(p.getUsername())) {
+                                            profile2 = p;
+                                        }
+                                    }
+                                    if (profile1.friendsList.incomingFriendRequests.contains(profile2) && profile2.friendsList.outgoingFriendRequests.contains(profile1)) {
+                                        profile1.friendsList.incomingFriendRequests.remove(profile2);
+                                        profile2.friendsList.outgoingFriendRequests.remove(profile1);
+                                    } else if (profile2.friendsList.incomingFriendRequests.contains(profile1) && profile1.friendsList.outgoingFriendRequests.contains(profile2)) {
+                                        profile2.friendsList.incomingFriendRequests.remove(profile1);
+                                        profile1.friendsList.outgoingFriendRequests.remove(profile2);
+                                    }
+                                    System.out.println(profile1.getUsername() + " has cancelled a friend request to " + profile2.getUsername());
+                                    serverObjectStorage.saveUsersToDatabase();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case "accept friend":
+                                System.out.println("User has tried to accept a friend");
+                                try {
+                                    Profile profile1 = (Profile) objectInputStream.readObject(); //Getting
+                                    Profile profile2 = (Profile) objectInputStream.readObject(); //Sending
+                                    for (Profile p : serverObjectStorage.users) {
+                                        if (profile1.getUsername().equals(p.getUsername())) {
+                                            profile1 = p;
+                                        } else if (profile2.getUsername().equals(p.getUsername())) {
+                                            profile2 = p;
+                                        }
+                                    }
+                                    System.out.println(profile1.friendsList.incomingFriendRequests.size() + " | " + profile2.friendsList.outgoingFriendRequests.size());
+                                    if (profile1.friendsList.incomingFriendRequests.contains(profile2) && profile2.friendsList.outgoingFriendRequests.contains(profile1)
+                                            || profile2.friendsList.incomingFriendRequests.contains(profile1) && profile1.friendsList.outgoingFriendRequests.contains(profile2)) {
+                                        profile1.friendsList.addFriend(profile2);
+                                        profile2.friendsList.addFriend(profile1);
+                                        profile1.friendsList.incomingFriendRequests.remove(profile2);
+                                        profile2.friendsList.outgoingFriendRequests.remove(profile1);
+                                        System.out.println(profile1.getUsername() + " has added " + profile2.getUsername() + " as a friend");
+                                    }
+                                    serverObjectStorage.saveUsersToDatabase();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                        }
+                        line = objectInputStream.readUTF();
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    line = this.getName();
+                    System.out.println("----------------------------------------");
+                    try {
+                        stopThread();
+                    } catch (IOException ioException) {
+                        System.out.println("Error with doing the stop thread stuff");
+                    }
+                    System.out.println("IO Error: " + line + " terminated abruptly");
+                } catch (NullPointerException e) {
+                    line = this.getName();
+                    System.out.println("----------------------------------------");
+                    System.out.println("Client " + line + " Closed");
+                    try {
+                        stopThread();
+                    } catch (IOException ioException) {
+                        System.out.println("Error with doing the stop thread stuff");
+                    }
+                } finally {
+                    try {
+                        System.out.println("Connection Closing...");
+                        if (objectOutputStream != null) {
+                            objectOutputStream.close();
+                            System.out.println("Socket Input Stream Closed");
+                        }
+
+                        if (objectInputStream != null) {
+                            objectInputStream.close();
+                            System.out.println("Socket Output Closed");
+                        }
+
+                        if (socket != null) {
+                            stopThread();
+                        }
+                    } catch (IOException ie) {
+                        System.out.println("Socket Close Error");
+                    }
+                }
+            }
+        }
+      </code></pre>
+
+      <a id="ServerObjectStorage"></a>
+      <h2>ServerObjectStorage.java</h2>
+      <pre><code class="language-csharp">
+        package SocialMedia.ServerAndClient;
+
+        import SocialMedia.Profile;
+        
+        import javax.swing.*;
+        import java.io.File;
+        import java.io.FileNotFoundException;
+        import java.io.FileOutputStream;
+        import java.io.PrintWriter;
+        import java.util.ArrayList;
+        /**
+         * A class to store the users
+         *
+         * @author Jaden Baker
+         * @version 12/7/20
+         */
+        public class ServerObjectStorage {
+            public volatile ArrayList<Profile> users = new ArrayList<>();
+        
+            public void saveUsersToDatabase() {
+                File dir = new File("UsernameFiles");
+                File[] directoryListing = dir.listFiles();
+                assert directoryListing != null;
+                for(File file : directoryListing)
+                    if (!file.isDirectory())
+                        file.delete();
+        
+                if (directoryListing != null) {
+                    for (Profile p : users) {
+                        File file = new File("UsernameFiles/" + p.getUsername() + ".txt");
+                        FileOutputStream fOS = null;
+                        try {
+                            fOS = new FileOutputStream(file, false);
+                        } catch (FileNotFoundException fileNotFoundException) {
+                            JOptionPane.showMessageDialog(null,
+                                    "File Not Found Exception thrown!", "Social Profile App",
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                        assert fOS != null;
+                        PrintWriter pw = new PrintWriter(fOS);
+        
+                        if (p.getName() != null)
+                            pw.println(p.getName());
+                        if (p.getEmail() != null)
+                            pw.println(p.getEmail());
+        
+                        pw.println(p.getFriendsList().toString());
+        
+                        if (p.getWebsite() != null)
+                            pw.println(p.getWebsite());
+                        else
+                            pw.println("No Website");
+        
+                        if (p.getInterests() != null)
+                            pw.println(p.getInterests().toString());
+                        else
+                            pw.println("[]");
+        
+                        if (p.getAboutMe() != null)
+                            pw.println(p.getAboutMe());
+                        else
+                            pw.println("I haven't provided any information about myself");
+        
+                        pw.println(p.getAge());
+        
+                        if (p.getRawPassword() != null)
+                            pw.println(p.getRawPassword());
+        
+                        pw.close();
+                    }
+                }
+                System.out.println("Finished with save");
+            }
+        }
+      </code></pre>
+
+      <a id="UserClient"></a>
+      <h2>UserClient.java</h2>
+      <pre><code class="language-csharp">
+        package SocialMedia.ServerAndClient;
+
+        import SocialMedia.FriendsList;
+        import SocialMedia.Profile;
+        
+        import java.io.IOException;
+        import java.io.ObjectInputStream;
+        import java.io.ObjectOutputStream;
+        import java.net.InetAddress;
+        import java.net.Socket;
+        import java.util.ArrayList;
+        import java.util.concurrent.atomic.AtomicBoolean;
+        
+        /**
+         * Represents the user client
+         *
+         * @author Jaden Baker
+         * @version 12/7/20
+         */
+        public class UserClient extends Thread {
+        
+            public static ArrayList<Profile> profilesList = new ArrayList<>();
+            private final AtomicBoolean running = new AtomicBoolean(false);
+            public static Profile profile;
+            public InetAddress address = null; // Get localhost
+            public Socket socket = null; // Create a null socket
+            public String line; // Store information coming from server
+            public ObjectOutputStream objectOutputStream = null;
+            public ObjectInputStream objectInputStream = null;
+            boolean oISUsed = false;
+        
+            public UserClient() {
+                try {
+                    address = InetAddress.getLocalHost();
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    System.err.print("IO Exception");
+                }
+            }
+        
+            // Gets profile with desired username, returns null if doesn't exist
+            public static Profile getProfileWith(String username) {
+                for (Profile profile : profilesList) {
+                    if (profile.getUsername().equalsIgnoreCase(username)) {
+                        return profile;
+                    }
+                }
+                return null;
+            }
+        
+            public void interrupt() {
+                running.set(false);
+            }
+        
+        
+            public boolean login(String username, String rawPassword) throws IOException {
+                try {
+        
+        
+                    if(!socket.isConnected()){
+                        if(!SettingsAndConstants.LOCALHOST)
+                            socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                        else
+                            socket = new Socket(InetAddress.getLocalHost(), SettingsAndConstants.SERVER_PORT);
+                        objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                        objectInputStream = new ObjectInputStream(socket.getInputStream());
+                    }
+        
+                    System.out.println("Wrote UTF");
+                    objectOutputStream.writeUTF("see users");
+                    objectOutputStream.flush();
+                    objectOutputStream.reset();
+                    profilesList = (ArrayList<Profile>) objectInputStream.readObject();
+        
+        
+                    for (Profile p : profilesList) {
+                        if (p.username.equals(username)) {
+                            System.out.println(p.getUsername());
+                            if (p.rawPassword.equals(rawPassword)) {
+                                profile = p;
+                                return true;
+                            }
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+        
+            public void createAccount(String name, int age, String email, String website, ArrayList<String> interests,
+                                      FriendsList friendsList, String aboutMe, String username, String rawPassword) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("create profile");
+                System.out.println("Wrote UTF");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(new Profile(name, age, email, website, interests, friendsList, aboutMe, username, rawPassword));
+                System.out.println("Wrote Profile: " + new Profile(name, age, email, website, interests, friendsList, aboutMe, username, rawPassword).getName());
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+        
+            public void updateAccount(Profile profile) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("update profile");
+                System.out.println("Wrote UTF");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(profile);
+                System.out.println("Wrote Profile: " + profile.getName());
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+        
+            public void deleteAccount(Profile profile) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("delete profile");
+                System.out.println("Wrote UTF");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(profile);
+                System.out.println("Wrote Profile: " + profile.getName());
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+        
+            public void refreshPage() throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("see users");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                try {
+                    profilesList = (ArrayList<Profile>) objectInputStream.readObject();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Asked for users, size: " + profilesList.size());
+        
+                for(Profile p : profilesList){
+                    if(p.getUsername().equals(profile.getUsername())){
+                        profile = p;
+                    }
+                }
+                oISUsed = true;
+            }
+        
+            public void refreshPageNoLogin() throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("see users");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                try {
+                    profilesList = (ArrayList<Profile>) objectInputStream.readObject();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Asked for users, size: " + profilesList.size());
+                oISUsed = true;
+            }
+        
+            public void addFriend(Profile profile) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("add friend");
+                System.out.println("Wrote UTF");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(profile);
+                System.out.println("Wrote Profile: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(UserClient.profile);
+                System.out.println("Wrote Profile: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+        
+            public void cancelFriendRequest(Profile profile) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("cancel friend");
+                System.out.println("Cancelled Friend Request");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(profile);
+                System.out.println("Wrote profile to be cancelled: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(UserClient.profile);
+                System.out.println("Wrote your profile: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+        
+            public void acceptFriend(Profile profile) throws IOException {
+                if(!socket.isConnected()){
+                    socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                    objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                    objectInputStream = new ObjectInputStream(socket.getInputStream());
+                }
+                objectOutputStream.writeUTF("accept friend");
+                System.out.println("Wrote UTF");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(profile);
+                System.out.println("Wrote Profile: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                objectOutputStream.writeObject(UserClient.profile);
+                System.out.println("Wrote Profile: ");
+                objectOutputStream.flush();
+                objectOutputStream.reset();
+                oISUsed = true;
+            }
+            public void run() {
+                if(!socket.isConnected()){
+                    try {
+                        socket = new Socket(SettingsAndConstants.SERVER_HOST, SettingsAndConstants.SERVER_PORT);
+                        objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+                        objectInputStream = new ObjectInputStream(socket.getInputStream());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                running.set(true);
+                System.out.println("Client Address: " + address);
+                try {
+                    line = "see users";
+                    objectOutputStream.reset();
+                    objectOutputStream.writeUTF("see users");
+                    objectOutputStream.flush();
+                    objectOutputStream.reset();
+                    while (line.compareToIgnoreCase("quit") != 0 && running.get()) {
+                        if ("see users".equals(line)) {
+                            profilesList = (ArrayList<Profile>) objectInputStream.readObject();
+                            for(Profile p : profilesList){
+                                if(p.getUsername().equals(profile.getUsername())){
+                                    profile = p;
+                                }
+                            }
+                        }
+                        objectOutputStream.writeUTF(line);
+                        objectOutputStream.flush();
+                        objectOutputStream.reset();
+                        try {
+                            Thread.sleep(333);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        /* objectOutputStream.writeUTF(line);
+                        objectOutputStream.flush();
+                        objectOutputStream.reset(); */
+                    }
+                    if(!running.get() && socket.isConnected()){
+                        objectInputStream.close();
+                        objectOutputStream.close();
+                        socket.close();
+                        System.out.println("Connection Closed");
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    System.out.println("Socket Read Error");
+                } finally {
+                    //Make sure these objects aren't null
+                    assert objectInputStream != null;
+                    assert objectOutputStream != null;
+        
+                    //Close the client
+                    try {
+                        objectInputStream.close();
+                        objectOutputStream.close();
+                        socket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+        
+        
+                    //Client closed confirmation
+                    System.out.println("Connection Closed");
+                }
+            }
+        
+        
+        } 
+      </code></pre>
+
+      <a id="SettingsAndConstants"></a>
+      <h2>SettingsAndConstants.java</h2>
+      <pre><code class="language-csharp">
+        package SocialMedia.ServerAndClient;
+
+        import java.net.Inet4Address;
+        import java.net.InetAddress;
+        import java.net.UnknownHostException;
+        
+        /**
+         * Represents certain constant variables to be used anywhere,
+         * a settings file for things that someone might change outside
+         * of any class. Should have been something like a JSON.
+         *
+         * @author Jaden Baker
+         * @version 12/7/20
+         */
+        public class SettingsAndConstants {
+            public static final int SERVER_PORT = 4242;
+            public static final String SERVER_HOST = "76.11.165.202";
+            public static final boolean LOCALHOST = false;
+        
+            public static final String WELCOME_MESSAGE_SERVER = 
+            "   _____            _       _   __  __          _ _         _____           _           _   \n" +
+            "  / ____|          (_)     | | |  \\/  |        | (_)       |  __ \\         (_)         | |  \n" +
+            " | (___   ___   ___ _  __ _| | | \\  / | ___  __| |_  __ _  | |__) | __ ___  _  ___  ___| |_ \n" +
+            "  \\___ \\ / _ \\ / __| |/ _` | | | |\\/| |/ _ \\/ _` | |/ _` | |  ___/ '__/ _ \\| |/ _ \\/ __| __|\n" +
+            "  ____) | (_) | (__| | (_| | | | |  | |  __/ (_| | | (_| | | |   | | | (_) | |  __/ (__| |_ \n" +
+            " |_____/ \\___/ \\___|_|\\__,_|_| |_|  |_|\\___|\\__,_|_|\\__,_| |_|   |_|  \\___/| |\\___|\\___|\\__|\n" +
+            "                                                                          _/ |              \n" +
+            "                                                                          |__/               ";
+        }
+      </code></pre>
+    </div><!-- /.container -->
+
+    <div class="container">
+
+      <hr>
+
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p>Copyright &copy; Jaden Baker <span id="getCurrentDate"></span></p>
+            <p>Created with CSS, HTML, and JS, hosted on Github</span></p>
+          </div>
+        </div>
+      </footer>
+      
+    </div><!-- /.container -->
+
+    <!-- JavaScript -->
+    <script src="JS/jquery-1.10.2.js"></script>
+    <script src="JS/bootstrap.js"></script>
+    <script type="text/javascript">
+      let dt = new Date();
+      document.getElementById('getCurrentDate').innerHTML = dt.getFullYear();
+    </script>
+  </body>
+
+</html>
