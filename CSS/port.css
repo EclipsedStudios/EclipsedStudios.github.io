@@ -38,6 +38,12 @@
 	padding: 1rem;
   }
   
+  footer {
+	position: relative;
+	clear: both;
+  }
+  
+
   .navbar {
 	position: fixed;
 	background-color: var(--bg-primary);
@@ -82,13 +88,22 @@
 	background: var(--bg-secondary);
 	color: var(--text-secondary);
 	width: 221%;
+	font-weight: bolder;
+	text-decoration: dotted;
   }
   
   .link-text {
 	display: none;
 	margin-left: 0.5rem;
-	font-size: large;
+	font-size: xx-large;
 	font-weight: 500;
+  }
+
+  .link-text:hover {
+	display: none;
+	margin-left: 0.5rem;
+	font-size: xx-large;
+	font-weight: bolder;
   }
   
   .nav-link svg {
@@ -221,6 +236,7 @@
 		width: 200%;
 	}
 
+	
 	.navbar {
 	  top: 0;
 	  width: 5rem;
